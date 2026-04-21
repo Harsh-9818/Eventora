@@ -1,7 +1,7 @@
+const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -11,19 +11,48 @@ const bookingRoutes = require('./routes/bookings');
 
 const app = express();
 
-// Middleware
+// ================= MIDDLEWARE =================
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// ================= ROUTES =================
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/bookings', bookingRoutes);
 
-// Database Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/eventora')
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.error('MongoDB Connection Error:', err));
+// ================= DB CONNECTION =================
+let cached = global.mongoose;
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+const connectDB = async () => {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(process.env.MONGO_URI, {
+      bufferCommands: false,
+    }).then((mongoose) => mongoose);
+  }
+
+  cached.conn = await cached.promise;
+  console.log("✅ MongoDB Connected");
+
+  return cached.conn;
+};
+
+// 👉 server start hone pe connect karo
+connectDB();
+
+// ================= EXPORT =================
+module.exports = app;
+
+// ================= LOCAL RUN =================
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+}
