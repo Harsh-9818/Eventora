@@ -15,6 +15,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ================= TEST ROUTE (ADD THIS) =================
+app.get('/api/test', (req, res) => {
+  res.send('API WORKING ✅');
+});
+
 // ================= ROUTES =================
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
@@ -42,7 +47,7 @@ const connectDB = async () => {
   return cached.conn;
 };
 
-// 👉 server start hone pe connect karo
+// connect once
 connectDB();
 
 // ================= EXPORT =================
